@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import type { AuditForm, ToolEntry } from "../types/audit";
+import { runAudit } from "../utils/audit";
 
 const defaultTool: ToolEntry = {
   tool: "",
@@ -9,7 +10,7 @@ const defaultTool: ToolEntry = {
 };
 
 export default function Home() {
-  // ✅ FIX: lazy initialization (loads before first render)
+  // ✅ Load from localStorage before first render
   const [form, setForm] = useState<AuditForm>(() => {
     const saved = localStorage.getItem("audit-form");
 
@@ -22,12 +23,15 @@ export default function Home() {
         };
   });
 
-  // ✅ Save data on change
+  // ✅ Store form data
   useEffect(() => {
     localStorage.setItem("audit-form", JSON.stringify(form));
   }, [form]);
 
-  // Handle tool change
+  // ✅ Audit result state
+  const [auditResult, setAuditResult] = useState<any>(null);
+
+  // Handle tool updates
   const updateTool = (index: number, field: string, value: any) => {
     const updated = [...form.tools];
     updated[index] = {
@@ -38,7 +42,7 @@ export default function Home() {
     setForm({ ...form, tools: updated });
   };
 
-  // Add new tool
+  // Add tool
   const addTool = () => {
     setForm({ ...form, tools: [...form.tools, { ...defaultTool }] });
   };
@@ -49,13 +53,21 @@ export default function Home() {
     setForm({ ...form, tools: updated });
   };
 
+  // ✅ Run audit
+  const handleSubmit = () => {
+    const result = runAudit(form);
+    console.log(result);
+    setAuditResult(result);
+  };
+
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold">AI Spend Audit</h1>
 
+      {/* Tool Inputs */}
       {form.tools.map((tool, index) => (
         <div key={index} className="border p-4 mt-4 space-y-2">
-          
+
           <select
             value={tool.tool}
             onChange={(e) => updateTool(index, "tool", e.target.value)}
@@ -101,6 +113,7 @@ export default function Home() {
         </div>
       ))}
 
+      {/* Add Tool */}
       <button
         onClick={addTool}
         className="mt-4 bg-gray-200 px-4 py-2"
@@ -108,6 +121,7 @@ export default function Home() {
         + Add Another Tool
       </button>
 
+      {/* Team Info */}
       <div className="mt-6 space-y-2">
         <input
           type="number"
@@ -133,6 +147,23 @@ export default function Home() {
           <option value="mixed">Mixed</option>
         </select>
       </div>
+
+      {/* Run Audit Button */}
+      <button
+        onClick={handleSubmit}
+        className="bg-black text-white px-4 py-2 w-full mt-4"
+      >
+        Run Audit
+      </button>
+
+      {/* Audit Result */}
+      {auditResult && (
+        <div className="mt-6 p-4 border">
+          <h2 className="text-xl font-bold">Audit Result</h2>
+          <p>Monthly Savings: ${auditResult.totalSavings}</p>
+          <p>Annual Savings: ${auditResult.annualSavings}</p>
+        </div>
+      )}
     </div>
   );
 }
