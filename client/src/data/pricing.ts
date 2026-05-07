@@ -1,11 +1,11 @@
-type Plan = {
+type PlanType = "individual" | "team" | "enterprise" | "premium";
+
+export type Plan = {
   price: number;
-  type: "individual" | "team" | "enterprise" | "premium";
+  type: PlanType;
 };
 
-type ToolPricing = Record<string, Plan>;
-
-export const pricing: Record<string, ToolPricing> = {
+export const pricing = {
   ChatGPT: {
     Plus: { price: 20, type: "individual" },
     Team: { price: 25, type: "team" },
@@ -28,4 +28,8 @@ export const pricing: Record<string, ToolPricing> = {
     Pro: { price: 20, type: "individual" },
     Ultra: { price: 30, type: "premium" },
   },
-};
+} as const;
+
+// 🔥 Derived types (VERY IMPORTANT)
+export type ToolName = keyof typeof pricing;
+export type ToolPlans<T extends ToolName> = keyof typeof pricing[T];
