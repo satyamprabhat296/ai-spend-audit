@@ -31,7 +31,6 @@ export default function Home() {
   const updateTool = (index: number, field: string, value: any) => {
     const updated = [...form.tools];
 
-    // 🔥 reset plan if tool changes
     if (field === "tool") {
       updated[index] = {
         ...updated[index],
@@ -59,7 +58,20 @@ export default function Home() {
   };
 
   const handleSubmit = () => {
-    const result = runAudit(form);
+    const cleanedTools = form.tools.filter(
+      (t) => t.tool && t.plan && t.spend > 0
+    );
+
+    if (cleanedTools.length === 0) {
+      alert("Please add at least one valid tool");
+      return;
+    }
+
+    const result = runAudit({
+      ...form,
+      tools: cleanedTools,
+    });
+
     setAuditResult(result);
   };
 
@@ -69,6 +81,11 @@ export default function Home() {
     return "none";
   };
 
+  const totalSpend = form.tools.reduce(
+    (sum, t) => sum + (t.spend || 0),
+    0
+  );
+
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold">AI Spend Audit</h1>
@@ -76,11 +93,15 @@ export default function Home() {
       {form.tools.map((tool, index) => {
         const toolKey = tool.tool as ToolName;
         const plans = tool.tool ? Object.keys(pricing[toolKey]) : [];
+        const isEmpty = !tool.tool && !tool.plan && tool.spend === 0;
 
         return (
-          <div key={index} className="border p-4 mt-4 space-y-2">
-
-            {/* Tool */}
+          <div
+            key={index}
+            className={`border p-4 mt-4 space-y-2 ${
+              isEmpty ? "opacity-60" : ""
+            }`}
+          >
             <select
               value={tool.tool}
               onChange={(e) => updateTool(index, "tool", e.target.value)}
@@ -94,7 +115,6 @@ export default function Home() {
               ))}
             </select>
 
-            {/* Plan */}
             <select
               value={tool.plan}
               onChange={(e) => updateTool(index, "plan", e.target.value)}
@@ -109,7 +129,6 @@ export default function Home() {
               ))}
             </select>
 
-            {/* Spend */}
             <input
               type="number"
               placeholder="Monthly Spend ($)"
@@ -118,7 +137,6 @@ export default function Home() {
               className="border p-2 w-full"
             />
 
-            {/* Seats */}
             <input
               type="number"
               placeholder="Seats"
@@ -170,6 +188,11 @@ export default function Home() {
         </select>
       </div>
 
+      {/* 🔥 Total Spend */}
+      <div className="mt-4 text-sm text-gray-600">
+        Current Spend: <span className="font-semibold">${totalSpend}/month</span>
+      </div>
+
       <button
         onClick={handleSubmit}
         className="bg-black text-white px-4 py-2 w-full mt-4"
@@ -177,7 +200,7 @@ export default function Home() {
         Run Audit
       </button>
 
-      {auditResult ? (
+      {auditResult && (
         <div className="mt-6 space-y-4">
 
           {/* 🔥 Summary */}
@@ -188,6 +211,39 @@ export default function Home() {
             </p>
             <p className="text-sm opacity-80">
               ${auditResult.annualSavings}/year
+            </p>
+          </div>
+
+          {/* 🔥 Copy Report */}
+          <button
+            onClick={() => {
+              const text = auditResult.results
+                .map(
+                  (r: any) =>
+                    `${r.tool}: ${r.recommendation} → Save $${r.savings}/month`
+                )
+                .join("\n");
+
+              navigator.clipboard.writeText(
+                `AI Spend Audit Report\n\nTotal Savings: $${auditResult.totalSavings}/month\n\n${text}`
+              );
+
+              alert("Copied to clipboard!");
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Copy Report
+          </button>
+
+          {/* 🔥 Insight Banner */}
+          <div className="p-4 rounded bg-purple-100 border border-purple-300">
+            <p className="font-semibold">💡 Insight:</p>
+            <p className="text-sm mt-1">
+              You could reduce your AI spending by{" "}
+              <span className="font-bold">
+                ${auditResult.totalSavings}/month
+              </span>{" "}
+              by optimizing plan selection across tools.
             </p>
           </div>
 
@@ -209,7 +265,6 @@ export default function Home() {
                       : "border-green-400 bg-green-50"
                   }`}
                 >
-
                   <div className="flex justify-between items-center">
                     <p className="font-semibold">{item.tool}</p>
 
@@ -236,7 +291,9 @@ export default function Home() {
 
                   <p className="mt-2">
                     Recommendation:{" "}
-                    <span className="font-medium">{item.recommendation}</span>
+                    <span className="font-medium">
+                      {item.recommendation}
+                    </span>
                   </p>
 
                   <p className="text-sm text-gray-600">
@@ -246,14 +303,12 @@ export default function Home() {
                   <p className="mt-2 font-semibold">
                     Savings: ${item.savings}
                   </p>
-
                 </div>
               );
             })}
           </div>
-
         </div>
-      ) : null}
+      )}
     </div>
   );
-} 
+}
