@@ -1,24 +1,31 @@
-export const pricing = {
+type Plan = {
+  price: number;
+  type: "individual" | "team" | "enterprise" | "premium";
+};
+
+type ToolPricing = Record<string, Plan>;
+
+export const pricing: Record<string, ToolPricing> = {
   ChatGPT: {
-    Plus: 20,
-    Team: 25,
-    Enterprise: 60,
+    Plus: { price: 20, type: "individual" },
+    Team: { price: 25, type: "team" },
+    Enterprise: { price: 60, type: "enterprise" },
   },
   Claude: {
-    Pro: 20,
-    Max: 100,
-    Team: 30,
+    Pro: { price: 20, type: "individual" },
+    Max: { price: 100, type: "premium" },
+    Team: { price: 30, type: "team" },
   },
   Cursor: {
-    Pro: 20,
-    Business: 40,
+    Pro: { price: 20, type: "individual" },
+    Business: { price: 40, type: "team" },
   },
   Copilot: {
-    Individual: 10,
-    Business: 19,
+    Individual: { price: 10, type: "individual" },
+    Business: { price: 19, type: "team" },
   },
   Gemini: {
-    Pro: 20,
-    Ultra: 30,
+    Pro: { price: 20, type: "individual" },
+    Ultra: { price: 30, type: "premium" },
   },
 };
