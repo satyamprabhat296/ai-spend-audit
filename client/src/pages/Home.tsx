@@ -30,10 +30,22 @@ export default function Home() {
 
   const updateTool = (index: number, field: string, value: any) => {
     const updated = [...form.tools];
-    updated[index] = {
-      ...updated[index],
-      [field]: field === "spend" || field === "seats" ? Number(value) : value,
-    };
+
+    // 🔥 reset plan if tool changes
+    if (field === "tool") {
+      updated[index] = {
+        ...updated[index],
+        tool: value,
+        plan: "",
+      };
+    } else {
+      updated[index] = {
+        ...updated[index],
+        [field]:
+          field === "spend" || field === "seats" ? Number(value) : value,
+      };
+    }
+
     setForm({ ...form, tools: updated });
   };
 
@@ -49,6 +61,12 @@ export default function Home() {
   const handleSubmit = () => {
     const result = runAudit(form);
     setAuditResult(result);
+  };
+
+  const getStatus = (savings: number) => {
+    if (savings > 50) return "high";
+    if (savings > 0) return "medium";
+    return "none";
   };
 
   return (
@@ -162,47 +180,80 @@ export default function Home() {
       {auditResult ? (
         <div className="mt-6 space-y-4">
 
-          <div className="p-4 border rounded bg-gray-50">
-            <h2 className="text-xl font-bold">Your Savings</h2>
-            <p className="text-lg mt-2">
-              Monthly: <span className="font-semibold">${auditResult.totalSavings}</span>
+          {/* 🔥 Summary */}
+          <div className="p-4 border rounded bg-black text-white">
+            <h2 className="text-xl font-bold">Total Savings</h2>
+            <p className="text-2xl mt-2 font-bold">
+              ${auditResult.totalSavings}/month
             </p>
-            <p>
-              Annual: <span className="font-semibold">${auditResult.annualSavings}</span>
+            <p className="text-sm opacity-80">
+              ${auditResult.annualSavings}/year
             </p>
           </div>
 
+          {/* 🔥 Breakdown */}
           <div>
             <h2 className="text-lg font-bold mb-2">Breakdown</h2>
 
-            {auditResult.results?.map((item: any, index: number) => (
-              <div key={index} className="border p-4 mb-3 rounded">
+            {auditResult.results?.map((item: any, index: number) => {
+              const status = getStatus(item.savings);
 
-                <p className="font-semibold">{item.tool}</p>
+              return (
+                <div
+                  key={index}
+                  className={`border p-4 mb-3 rounded ${
+                    status === "high"
+                      ? "border-red-400 bg-red-50"
+                      : status === "medium"
+                      ? "border-yellow-400 bg-yellow-50"
+                      : "border-green-400 bg-green-50"
+                  }`}
+                >
 
-                <p className="text-sm text-gray-600">
-                  Current Plan: {item.currentPlan || "N/A"}
-                </p>
+                  <div className="flex justify-between items-center">
+                    <p className="font-semibold">{item.tool}</p>
 
-                <p className="mt-2">
-                  Recommendation:{" "}
-                  <span className="font-medium">{item.recommendation}</span>
-                </p>
+                    <span
+                      className={`text-xs px-2 py-1 rounded ${
+                        status === "high"
+                          ? "bg-red-200 text-red-800"
+                          : status === "medium"
+                          ? "bg-yellow-200 text-yellow-800"
+                          : "bg-green-200 text-green-800"
+                      }`}
+                    >
+                      {status === "high"
+                        ? "High Savings"
+                        : status === "medium"
+                        ? "Optimize"
+                        : "Optimized"}
+                    </span>
+                  </div>
 
-                <p className="text-sm text-gray-600">
-                  {item.reason}
-                </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Current Plan: {item.currentPlan || "N/A"}
+                  </p>
 
-                <p className="mt-2 text-green-600 font-semibold">
-                  Savings: ${item.savings}
-                </p>
+                  <p className="mt-2">
+                    Recommendation:{" "}
+                    <span className="font-medium">{item.recommendation}</span>
+                  </p>
 
-              </div>
-            ))}
+                  <p className="text-sm text-gray-600">
+                    {item.reason}
+                  </p>
+
+                  <p className="mt-2 font-semibold">
+                    Savings: ${item.savings}
+                  </p>
+
+                </div>
+              );
+            })}
           </div>
 
         </div>
       ) : null}
     </div>
   );
-}
+} 
