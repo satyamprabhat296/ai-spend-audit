@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🚀 AI Spend Audit
 
 An intelligent web app that analyzes your AI tool subscriptions and identifies **cost-saving opportunities** across plans.
@@ -248,3 +249,32 @@ Stores email + audit data
 ## ⭐ If you found this useful
 
 Give this repo a star ⭐ — it helps!
+=======
+# AI Spend Audit
+
+A smart tool to analyze and optimize AI tool subscriptions.
+
+## Features
+
+- Detect overpayment in AI tools
+- Recommend cheaper plans
+- Calculate monthly & annual savings
+- Copy/share audit report
+
+## Tech Stack
+
+- React + TypeScript
+- Vite
+- Tailwind CSS
+
+## Setup
+
+cd client
+npm install
+npm run dev
+
+## Example
+
+ChatGPT Enterprise → Switch to Plus → Save $80/month
+Claude Team → Switch to Pro → Save $30/month
+>>>>>>> 8e9c0f1 (feat: day 3 complete (AI summary + email capture))
