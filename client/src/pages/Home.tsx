@@ -27,6 +27,12 @@ export default function Home() {
   }, [form]);
 
   const [auditResult, setAuditResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [summary, setSummary] = useState("");
+
+  // ✅ Email states
+  const [email, setEmail] = useState("");
+  const [saved, setSaved] = useState(false);
 
   const updateTool = (index: number, field: string, value: any) => {
     const updated = [...form.tools];
@@ -57,7 +63,35 @@ export default function Home() {
     setForm({ ...form, tools: updated });
   };
 
-  const handleSubmit = () => {
+  // ✅ Save Lead (FIXED API)
+  const handleSaveLead = async () => {
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail || !cleanEmail.includes("@")) {
+      alert("Enter valid email");
+      return;
+    }
+
+    try {
+      await fetch("http://localhost:5000/api/lead", { // ✅ FIXED HERE
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: cleanEmail,
+          audit: auditResult,
+        }),
+      });
+
+      setSaved(true);
+      setEmail(""); // optional reset
+    } catch {
+      alert("Failed to save");
+    }
+  };
+
+  const handleSubmit = async () => {
     const cleanedTools = form.tools.filter(
       (t) => t.tool && t.plan && t.spend > 0
     );
@@ -67,12 +101,34 @@ export default function Home() {
       return;
     }
 
+    setLoading(true);
+    setSaved(false); // reset email state
+
     const result = runAudit({
       ...form,
       tools: cleanedTools,
     });
 
     setAuditResult(result);
+
+    try {
+      const res = await fetch("http://localhost:5000/api/summary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ audit: result }),
+      });
+
+      const data = await res.json();
+      setSummary(data.summary);
+    } catch {
+      setSummary(
+        "You can reduce AI costs by optimizing plans across your tools."
+      );
+    }
+
+    setLoading(false);
   };
 
   const getStatus = (savings: number) => {
@@ -90,6 +146,7 @@ export default function Home() {
     <div className="p-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold">AI Spend Audit</h1>
 
+      {/* Tools */}
       {form.tools.map((tool, index) => {
         const toolKey = tool.tool as ToolName;
         const plans = tool.tool ? Object.keys(pricing[toolKey]) : [];
@@ -162,6 +219,7 @@ export default function Home() {
         + Add Another Tool
       </button>
 
+      {/* Team */}
       <div className="mt-6 space-y-2">
         <input
           type="number"
@@ -188,33 +246,69 @@ export default function Home() {
         </select>
       </div>
 
-      {/* 🔥 Total Spend */}
       <div className="mt-4 text-sm text-gray-600">
-        Current Spend: <span className="font-semibold">${totalSpend}/month</span>
+        Current Spend:{" "}
+        <span className="font-semibold">${totalSpend}/month</span>
       </div>
 
       <button
         onClick={handleSubmit}
+        disabled={loading}
         className="bg-black text-white px-4 py-2 w-full mt-4"
       >
-        Run Audit
+        {loading ? "Analyzing..." : "Run Audit"}
       </button>
 
+      {/* RESULTS */}
       {auditResult && (
         <div className="mt-6 space-y-4">
 
-          {/* 🔥 Summary */}
           <div className="p-4 border rounded bg-black text-white">
-            <h2 className="text-xl font-bold">Total Savings</h2>
-            <p className="text-2xl mt-2 font-bold">
-              ${auditResult.totalSavings}/month
-            </p>
-            <p className="text-sm opacity-80">
+            <h2 className="text-xl font-bold">
+              💰 You’re overspending by ${auditResult.totalSavings}/month
+            </h2>
+            <p className="text-sm opacity-80 mt-1">
               ${auditResult.annualSavings}/year
             </p>
           </div>
 
-          {/* 🔥 Copy Report */}
+          {summary && (
+            <div className="p-4 border rounded bg-gray-100">
+              <h3 className="font-semibold mb-2">AI Summary</h3>
+              <p className="text-sm text-gray-700">{summary}</p>
+            </div>
+          )}
+
+          {/* EMAIL CAPTURE */}
+          <div className="p-4 border rounded bg-yellow-50">
+            <p className="font-semibold mb-2">
+              📩 Get detailed report in your email
+            </p>
+
+            {!saved ? (
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="border p-2 w-full"
+                />
+
+                <button
+                  onClick={handleSaveLead}
+                  className="bg-black text-white px-4"
+                >
+                  Get Report
+                </button>
+              </div>
+            ) : (
+              <p className="text-green-600 font-medium">
+                ✅ Report saved successfully!
+              </p>
+            )}
+          </div>
+
           <button
             onClick={() => {
               const text = auditResult.results
@@ -235,19 +329,6 @@ export default function Home() {
             Copy Report
           </button>
 
-          {/* 🔥 Insight Banner */}
-          <div className="p-4 rounded bg-purple-100 border border-purple-300">
-            <p className="font-semibold">💡 Insight:</p>
-            <p className="text-sm mt-1">
-              You could reduce your AI spending by{" "}
-              <span className="font-bold">
-                ${auditResult.totalSavings}/month
-              </span>{" "}
-              by optimizing plan selection across tools.
-            </p>
-          </div>
-
-          {/* 🔥 Breakdown */}
           <div>
             <h2 className="text-lg font-bold mb-2">Breakdown</h2>
 
@@ -268,15 +349,7 @@ export default function Home() {
                   <div className="flex justify-between items-center">
                     <p className="font-semibold">{item.tool}</p>
 
-                    <span
-                      className={`text-xs px-2 py-1 rounded ${
-                        status === "high"
-                          ? "bg-red-200 text-red-800"
-                          : status === "medium"
-                          ? "bg-yellow-200 text-yellow-800"
-                          : "bg-green-200 text-green-800"
-                      }`}
-                    >
+                    <span className="text-xs px-2 py-1 rounded">
                       {status === "high"
                         ? "High Savings"
                         : status === "medium"
