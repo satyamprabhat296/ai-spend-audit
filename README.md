@@ -136,7 +136,7 @@ ai-spend-audit/
 ### 1️⃣ Clone Repo
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ai-spend-audit.git
+git clone https://github.com/satyamprabhat296/ai-spend-audit.git
 cd ai-spend-audit
 ```
 
