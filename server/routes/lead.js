@@ -19,7 +19,10 @@ router.post("/", (req, res) => {
 
   console.log("📩 New Lead Captured:", email);
 
-  res.json({ success: true });
+res.json({
+  success: true,
+  message: "Lead saved successfully",
+});
 });
 
 export default router;

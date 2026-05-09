@@ -4,34 +4,21 @@ import dotenv from "dotenv";
 import OpenAI from "openai";
 import leadRoutes from "./routes/lead.js";
 
-
 dotenv.config();
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
-app.use("/api/lead", leadRoutes);
+
+/* ✅ Lead Routes */
+app.use("/api/save-lead", leadRoutes);
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-app.post("/api/save-lead", async (req, res) => {
-  try {
-    const { email, audit } = req.body;
 
-    console.log("New Lead:", email);
-    console.log("Audit:", audit);
-
-    // For now: just log (assignment-friendly)
-    // Later you can plug DB (Supabase)
-
-    res.json({ success: true });
-
-  } catch (err) {
-    res.status(500).json({ success: false });
-  }
-});
-
+/* ✅ AI Summary Route */
 app.post("/api/summary", async (req, res) => {
   try {
     const { audit } = req.body;
@@ -62,7 +49,7 @@ Keep it simple and actionable.
   } catch (err) {
     console.error(err);
 
-    // ✅ Fallback (IMPORTANT for assignment)
+    // ✅ Fallback summary
     res.json({
       summary:
         "You have opportunities to reduce AI spending by optimizing your current plans. Review recommended changes to lower costs efficiently.",
@@ -70,4 +57,13 @@ Keep it simple and actionable.
   }
 });
 
-app.listen(5000, () => console.log("Server running on port 5000"));
+const PORT = 5000;
+
+/* ✅ Prevent server from starting during tests */
+if (process.env.NODE_ENV !== "test") {
+  app.listen(PORT, () => {
+    console.log(`Server running on ${PORT}`);
+  });
+}
+
+export default app;
