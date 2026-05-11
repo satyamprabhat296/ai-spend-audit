@@ -13,7 +13,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://ai-spend-audit-eta-gray.vercel.app/",
+      "https://ai-spend-audit-beige.vercel.app/",
     ],
     methods: ["GET", "POST"],
     credentials: true,
