@@ -1,9 +1,15 @@
-<<<<<<< HEAD
+
 # 🚀 AI Spend Audit
 
 An intelligent web app that analyzes your AI tool subscriptions and identifies **cost-saving opportunities** across plans.
 
 ---
+
+## Live Demo
+
+Frontend: https://ai-spend-audit-ghmi0wbnz-satyam-prabhat-singhs-projects.vercel.app
+
+Backend API: https://ai-spend-audit-9y74.onrender.com
 
 ## 🔍 Problem
 
