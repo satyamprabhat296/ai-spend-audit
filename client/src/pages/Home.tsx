@@ -3,8 +3,7 @@ import type { AuditForm, ToolEntry } from "../types/audit";
 import { runAudit } from "../utils/audit";
 import { pricing, type ToolName } from "../data/pricing";
 
-const API_BASE_URL = "https://ai-spend-audit-9y74.onrender.com";
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const defaultTool: ToolEntry = {
   tool: "",
   plan: "",

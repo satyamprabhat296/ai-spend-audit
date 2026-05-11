@@ -8,12 +8,31 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+/* ✅ CORS Configuration */
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://your-vercel-app.vercel.app",
+    ],
+    methods: ["GET", "POST"],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
-/* ✅ Lead Routes */
-app.use("/api/save-lead", leadRoutes);
+/* ✅ Health Check Route */
+app.get("/", (req, res) => {
+  res.json({
+    status: "API running",
+  });
+});
 
+/* ✅ Lead Routes */
+app.use("/api/lead", leadRoutes);
+
+/* ✅ OpenAI Client */
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -22,6 +41,12 @@ const client = new OpenAI({
 app.post("/api/summary", async (req, res) => {
   try {
     const { audit } = req.body;
+
+    if (!audit) {
+      return res.status(400).json({
+        error: "Audit data required",
+      });
+    }
 
     const prompt = `
 You are an AI cost optimization expert.
@@ -37,29 +62,39 @@ Write a short 80-100 word summary explaining:
 Keep it simple and actionable.
 `;
 
-    const completion = await client.chat.completions.create({
-      model: "gpt-4.1-mini",
-      messages: [{ role: "user", content: prompt }],
-    });
+    const completion =
+      await client.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+      });
 
     res.json({
-      summary: completion.choices[0].message.content,
+      success: true,
+      summary:
+        completion.choices[0].message.content,
     });
 
   } catch (err) {
     console.error(err);
 
-    // ✅ Fallback summary
+    /* ✅ Fallback Summary */
     res.json({
+      success: true,
       summary:
         "You have opportunities to reduce AI spending by optimizing your current plans. Review recommended changes to lower costs efficiently.",
     });
   }
 });
 
-const PORT = 5000;
+/* ✅ Server */
+const PORT = process.env.PORT || 5000;
 
-/* ✅ Prevent server from starting during tests */
+/* ✅ Prevent tests from starting server */
 if (process.env.NODE_ENV !== "test") {
   app.listen(PORT, () => {
     console.log(`Server running on ${PORT}`);
